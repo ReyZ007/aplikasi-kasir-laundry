@@ -12,7 +12,7 @@ if ($_SESSION['level'] != "admin") {
 // Proses Tambah Akun
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
     $username = mysqli_real_escape_string($koneksi, $_POST['username']);
-    $password = md5($_POST['password']);
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $level = mysqli_real_escape_string($koneksi, $_POST['level']);
     $id_petugas = mysqli_real_escape_string($koneksi, $_POST['id_petugas']);
 
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
     $id_akun = $_POST['id_akun'];
     $username = mysqli_real_escape_string($koneksi, $_POST['username']);
-    $password = md5($_POST['password']);
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
     $level = mysqli_real_escape_string($koneksi, $_POST['level']);
     $id_petugas = mysqli_real_escape_string($koneksi, $_POST['id_petugas']);
 
@@ -143,7 +143,6 @@ include "../include/navbar_admin.php";
                     <tr>
                         <th>No.</th>
                         <th>Username</th>
-                        <th>Password</th>
                         <th>Level</th>
                         <th>Aksi</th>
                     </tr>
@@ -157,7 +156,6 @@ include "../include/navbar_admin.php";
                     <tr>
                         <td><?= $no++; ?></td>
                         <td><?= htmlspecialchars($data['username']); ?></td>
-                        <td><?= htmlspecialchars($data['password']); ?></td>
                         <td><?= htmlspecialchars($data['level']); ?></td>
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
@@ -199,12 +197,6 @@ include "../include/navbar_admin.php";
                                             <div class="bg-light p-3 rounded">
                                                 <small class="text-muted">Username</small>
                                                 <p class="mb-0 fw-bold"><?= htmlspecialchars($data['username']); ?></p>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-12">
-                                            <div class="bg-light p-3 rounded">
-                                                <small class="text-muted">Password</small>
-                                                <p class="mb-0 fw-bold"><?= htmlspecialchars($data['password']); ?></p>
                                             </div>
                                         </div>
                                         <div class="col-md-12">
@@ -269,7 +261,7 @@ include "../include/navbar_admin.php";
                     <?php
                         }
                     } else {
-                        echo "<tr><td colspan='5'>Tidak ada data akun.</td></tr>";
+                        echo "<tr><td colspan='4'>Tidak ada data akun.</td></tr>";
                     }
                     ?>
                 </tbody>

@@ -52,11 +52,11 @@ Semua data (nama, nomor telepon, transaksi) adalah data dummy.
 
 ## Yang Aku Pelajari
 
-- [Tulis 2-3 hal dengan kata-katamu sendiri, misalnya: membuat relasi antar
-  tabel, membuat laporan berdasarkan rentang tanggal, atau memakai Chart.js]
-- Hal yang masih ingin kuperbaiki: query masih ditulis langsung (rawan SQL
-  injection) dan password masih memakai MD5. Rencananya diganti dengan
-  prepared statement dan `password_hash()`.
-  
-  Transaksi dummy bertanggal 28 Oktober sampai 3 November 2026, jadi dashboard
-dan laporan paling terisi kalau dilihat pada rentang tanggal itu.
+- [Tulis 2-3 hal dari proses membuat aplikasi ini dengan kata-katamu sendiri]
+- Keamanan login: awalnya query login rawan SQL injection (bisa dibobol
+  dengan input seperti `admin'#`) dan password disimpan dengan MD5. Sekarang
+  login memakai prepared statement, password disimpan dengan
+  `password_hash()` dan dicek dengan `password_verify()`, dan hash password
+  tidak lagi ditampilkan di halaman Data Akun.
+- Yang masih perlu diperbaiki: query di halaman lain (transaksi, customer,
+  petugas, laporan) masih perlu diubah ke prepared statement.

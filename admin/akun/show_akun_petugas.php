@@ -38,7 +38,7 @@ if (isset($_POST['update'])) {
         if (mysqli_num_rows($check_result) > 0) {
             $error_message = "Username sudah digunakan oleh akun lain!";
         } else {
-            $hashed_password = md5($new_password);
+            $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
             $update_query = "UPDATE akun SET username = '$new_username', password = '$hashed_password' WHERE id_petugas = '$id_petugas'";
 
             if (mysqli_query($koneksi, $update_query)) {

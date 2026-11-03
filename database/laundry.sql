@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 03 Nov 2026 pada 07.03
+-- Waktu pembuatan: 03 Nov 2026 pada 08.10
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -40,8 +40,8 @@ CREATE TABLE `akun` (
 --
 
 INSERT INTO `akun` (`id_akun`, `username`, `password`, `level`, `id_petugas`) VALUES
-(1, 'admin', 'c4ca4238a0b923820dcc509a6f75849b', 'admin', 1),
-(25, 'Budi', 'c20ad4d76fe97759aa27a0c99bff6710', 'petugas', 24);
+(1, 'admin', '$2y$10$ChqtFdmYKbKeKoKnmJBuTOt13S/zoZ7ljHA4mcnJPBZ7jUEmN4WNi', 'admin', 1),
+(25, 'Budi', '$2y$10$mFE1qBtUGa3GdzxIkqWroeBcvPf67mWP2L7.50uPOxq9xQT8l9.X.', 'petugas', 24);
 
 -- --------------------------------------------------------
 
