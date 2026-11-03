@@ -53,10 +53,13 @@ Semua data (nama, nomor telepon, transaksi) adalah data dummy.
 ## Yang Aku Pelajari
 
 - [Tulis 2-3 hal dari proses membuat aplikasi ini dengan kata-katamu sendiri]
-- Keamanan login: awalnya query login rawan SQL injection (bisa dibobol
+- Keamanan: awalnya aplikasi ini rawan SQL injection (login bisa dibobol
   dengan input seperti `admin'#`) dan password disimpan dengan MD5. Sekarang
-  login memakai prepared statement, password disimpan dengan
-  `password_hash()` dan dicek dengan `password_verify()`, dan hash password
-  tidak lagi ditampilkan di halaman Data Akun.
-- Yang masih perlu diperbaiki: query di halaman lain (transaksi, customer,
-  petugas, laporan) masih perlu diubah ke prepared statement.
+  semua query yang memakai input pengguna memakai prepared statement,
+  password disimpan dengan `password_hash()` dan dicek dengan
+  `password_verify()`, dan hash password tidak lagi ditampilkan di halaman.
+- Fitur hapus transaksi di halaman transaksi dihapus karena tidak punya
+  tombol di tampilan. Kode yang tidak dipakai sebaiknya tidak ada.
+- Yang masih perlu diperbaiki: proses hapus masih lewat link (GET), idealnya
+  lewat form POST dengan token CSRF; pesan error database juga sebaiknya
+  tidak ditampilkan ke pengguna.

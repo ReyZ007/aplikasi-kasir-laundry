@@ -16,16 +16,19 @@ if (isset($_SESSION['level'])) {
 
     // Handle Tambah Transaksi (POST)
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_transaksi'])) {
-        $id_customer      = $_POST['id_customer'];
-        $id_petugas       = $_SESSION['id_petugas']; // Ambil id_petugas dari session
+        $id_customer      = (int) $_POST['id_customer'];
+        $id_petugas       = (int) $_SESSION['id_petugas']; // Ambil id_petugas dari session
         $tgl_transaksi    = date('Y-m-d'); // Tanggal otomatis hari ini
         $waktu_transaksi  = date('H:i:s'); // Waktu otomatis saat ini
         $status           = 'Proses';
 
         // Tambahkan transaksi
         $query_tambah = "INSERT INTO transaksi (id_customer, id_petugas, tgl_transaksi, waktu_transaksi, status) 
-                         VALUES ('$id_customer', '$id_petugas', '$tgl_transaksi', '$waktu_transaksi', '$status')";
-        mysqli_query($koneksi, $query_tambah);
+                         VALUES (?, ?, ?, ?, ?)";
+        $stmt = mysqli_prepare($koneksi, $query_tambah);
+        mysqli_stmt_bind_param($stmt, "iisss", $id_customer, $id_petugas, $tgl_transaksi, $waktu_transaksi, $status);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
 
         // Redirect agar tidak resubmit form
         header("Location: show_transaksi.php?added=1");
@@ -34,58 +37,37 @@ if (isset($_SESSION['level'])) {
 
     // Handle Edit Transaksi (POST)
     if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit_transaksi'])) {
-        $id_transaksi = $_POST['id_transaksi'];
+        $id_transaksi = (int) $_POST['id_transaksi'];
         $status       = $_POST['status'];
-        $status_transaksi = $_POST['status_transaksi'];
+        $status_transaksi = (int) $_POST['status_transaksi'];
 
         // Update status
         $query_edit = "UPDATE transaksi 
-                       SET status = '$status', status_transaksi = '$status_transaksi' 
-                       WHERE id_transaksi = '$id_transaksi'";
-        mysqli_query($koneksi, $query_edit);
+                       SET status = ?, status_transaksi = ?
+                       WHERE id_transaksi = ?";
+        $stmt = mysqli_prepare($koneksi, $query_edit);
+        mysqli_stmt_bind_param($stmt, "sii", $status, $status_transaksi, $id_transaksi);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         
         header("Location: show_transaksi.php?edited=1");
         exit();
     }
 
-    // Handle Hapus Transaksi (GET)
-    if (isset($_GET['hapus_transaksi'])) {
-        $id_transaksi = $_GET['hapus_transaksi'];
-
-        // Pastikan ID transaksi valid
-        $query_check  = "SELECT * FROM transaksi WHERE id_transaksi = '$id_transaksi'";
-        $result_check = mysqli_query($koneksi, $query_check);
-        if (mysqli_num_rows($result_check) > 0) {
-            // Hapus detail_transaksi terlebih dahulu
-            $query_hapus_detail = "DELETE FROM detail_transaksi WHERE id_transaksi = '$id_transaksi'";
-            mysqli_query($koneksi, $query_hapus_detail);
-
-            // Hapus transaksi utama
-            $query_hapus = "DELETE FROM transaksi WHERE id_transaksi = '$id_transaksi'";
-            mysqli_query($koneksi, $query_hapus);
-            echo "<script>
-                    alert('Transaksi berhasil dihapus beserta detailnya.');
-                    window.location='show_transaksi.php?deleted=1';
-                  </script>";
-            exit();
-        } else {
-            echo "<script>
-                    alert('Transaksi tidak ditemukan.');
-                    window.location='show_transaksi.php';
-                  </script>";
-            exit();
-        }
-    }
-
     // Pagination setup
     $status_filter = isset($_GET['status']) ? $_GET['status'] : 'Proses';
     $limit = 10; // Number of entries per page
-    $page = isset($_GET['page']) ? $_GET['page'] : 1;
+    $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+    $page = max(1, $page);
     $offset = ($page - 1) * $limit;
 
-    $total_query = "SELECT COUNT(*) AS total FROM transaksi WHERE status = '$status_filter'";
-    $total_result = mysqli_query($koneksi, $total_query);
+    $total_query = "SELECT COUNT(*) AS total FROM transaksi WHERE status = ?";
+    $total_stmt = mysqli_prepare($koneksi, $total_query);
+    mysqli_stmt_bind_param($total_stmt, "s", $status_filter);
+    mysqli_stmt_execute($total_stmt);
+    $total_result = mysqli_stmt_get_result($total_stmt);
     $total_data = mysqli_fetch_assoc($total_result);
+    mysqli_stmt_close($total_stmt);
     $total_entries = $total_data['total'];
     $total_pages = ceil($total_entries / $limit);
 
@@ -93,10 +75,13 @@ if (isset($_SESSION['level'])) {
             FROM transaksi t
             INNER JOIN customer c ON t.id_customer = c.id_customer
             INNER JOIN petugas p ON t.id_petugas = p.id_petugas
-            WHERE t.status = '$status_filter'
+            WHERE t.status = ?
             ORDER BY t.id_transaksi DESC
-            LIMIT $limit OFFSET $offset";
-    $sql_eksekusi = mysqli_query($koneksi, $sql);
+            LIMIT ? OFFSET ?";
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, "sii", $status_filter, $limit, $offset);
+    mysqli_stmt_execute($stmt);
+    $sql_eksekusi = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="id">
@@ -238,9 +223,13 @@ if (isset($_SESSION['level'])) {
               // Hitung total harga (jika diperlukan)
               $total_harga_query = "SELECT SUM(total_harga) AS total_harga_keseluruhan 
                                     FROM detail_transaksi 
-                                    WHERE id_transaksi = '".$data['id_transaksi']."'";
-              $total_harga_result = mysqli_query($koneksi, $total_harga_query);
+                                    WHERE id_transaksi = ?";
+              $total_harga_stmt = mysqli_prepare($koneksi, $total_harga_query);
+              mysqli_stmt_bind_param($total_harga_stmt, "i", $data['id_transaksi']);
+              mysqli_stmt_execute($total_harga_stmt);
+              $total_harga_result = mysqli_stmt_get_result($total_harga_stmt);
               $total_harga_data = mysqli_fetch_assoc($total_harga_result);
+              mysqli_stmt_close($total_harga_stmt);
               $total_harga_keseluruhan = $total_harga_data['total_harga_keseluruhan'] ?? 0;
 
               // Status
@@ -277,9 +266,13 @@ if (isset($_SESSION['level'])) {
             <td>
               <?php
               // Cek apakah ada detail transaksi
-              $detail_query = "SELECT * FROM detail_transaksi WHERE id_transaksi = '".$data['id_transaksi']."'";
-              $detail_result = mysqli_query($koneksi, $detail_query);
+              $detail_query = "SELECT * FROM detail_transaksi WHERE id_transaksi = ?";
+              $detail_stmt = mysqli_prepare($koneksi, $detail_query);
+              mysqli_stmt_bind_param($detail_stmt, "i", $data['id_transaksi']);
+              mysqli_stmt_execute($detail_stmt);
+              $detail_result = mysqli_stmt_get_result($detail_stmt);
               $detail_count = mysqli_num_rows($detail_result);
+              mysqli_stmt_close($detail_stmt);
               ?>
               <?php if ($detail_count == 0): ?>
                 <!-- Jika belum ada detail, tampilkan tombol lanjut & hapus -->
@@ -462,7 +455,7 @@ if (isset($_SESSION['level'])) {
                                    INNER JOIN jenis_cucian j ON d.id_jenis_cucian = j.id_jenis_cucian
                                    WHERE d.id_transaksi = ?";
                   $stmt = mysqli_prepare($koneksi, $detail_query);
-                  mysqli_stmt_bind_param($stmt, 's', $data['id_transaksi']);
+                  mysqli_stmt_bind_param($stmt, 'i', $data['id_transaksi']);
                   mysqli_stmt_execute($stmt);
                   $detail_result = mysqli_stmt_get_result($stmt);
                   while ($detail = mysqli_fetch_assoc($detail_result)):

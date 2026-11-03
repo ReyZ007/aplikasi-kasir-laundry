@@ -13,17 +13,19 @@ if ($_SESSION['level'] != "admin") {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Tambah Petugas
     if (isset($_POST['add'])) {
-        $nama_petugas = mysqli_real_escape_string($koneksi, $_POST['nama_petugas']);
-        $no_telp      = mysqli_real_escape_string($koneksi, $_POST['no_telp']);
-        $alamat       = mysqli_real_escape_string($koneksi, $_POST['alamat']);
-        $email        = mysqli_real_escape_string($koneksi, $_POST['email']);
+        $nama_petugas = $_POST['nama_petugas'];
+        $no_telp      = $_POST['no_telp'];
+        $alamat       = $_POST['alamat'];
+        $email        = $_POST['email'];
 
-        $sql = "INSERT INTO petugas (nama_petugas, no_telp, alamat, email) 
-                VALUES ('$nama_petugas', '$no_telp', '$alamat', '$email')";
-        if (mysqli_query($koneksi, $sql)) {
+        $stmt = mysqli_prepare($koneksi, "INSERT INTO petugas (nama_petugas, no_telp, alamat, email) VALUES (?, ?, ?, ?)");
+        if ($stmt && mysqli_stmt_bind_param($stmt, "ssss", $nama_petugas, $no_telp, $alamat, $email) && mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "Petugas berhasil ditambahkan!";
         } else {
             $_SESSION['error'] = "Gagal menambahkan petugas: " . mysqli_error($koneksi);
+        }
+        if ($stmt) {
+            mysqli_stmt_close($stmt);
         }
         header("Location: show_petugas.php");
         exit();
@@ -31,20 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Edit Petugas
     if (isset($_POST['edit'])) {
-        $id_petugas   = $_POST['id_petugas'];
-        $nama_petugas = mysqli_real_escape_string($koneksi, $_POST['nama_petugas']);
-        $no_telp      = mysqli_real_escape_string($koneksi, $_POST['no_telp']);
-        $alamat       = mysqli_real_escape_string($koneksi, $_POST['alamat']);
-        $email        = mysqli_real_escape_string($koneksi, $_POST['email']);
+        $id_petugas   = (int) $_POST['id_petugas'];
+        $nama_petugas = $_POST['nama_petugas'];
+        $no_telp      = $_POST['no_telp'];
+        $alamat       = $_POST['alamat'];
+        $email        = $_POST['email'];
 
-        $sql = "UPDATE petugas 
-                SET nama_petugas = '$nama_petugas', no_telp = '$no_telp', 
-                    alamat = '$alamat', email = '$email' 
-                WHERE id_petugas = '$id_petugas'";
-        if (mysqli_query($koneksi, $sql)) {
+        $stmt = mysqli_prepare($koneksi, "UPDATE petugas SET nama_petugas = ?, no_telp = ?, alamat = ?, email = ? WHERE id_petugas = ?");
+        if ($stmt && mysqli_stmt_bind_param($stmt, "ssssi", $nama_petugas, $no_telp, $alamat, $email, $id_petugas) && mysqli_stmt_execute($stmt)) {
             $_SESSION['message'] = "Petugas berhasil diperbarui!";
         } else {
             $_SESSION['error'] = "Gagal memperbarui petugas: " . mysqli_error($koneksi);
+        }
+        if ($stmt) {
+            mysqli_stmt_close($stmt);
         }
         header("Location: show_petugas.php");
         exit();
@@ -53,27 +55,43 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Proses Hapus Petugas
 if (isset($_GET['hapus_petugas'])) {
-    $id_petugas = $_GET['hapus_petugas'];
+    $id_petugas = (int) $_GET['hapus_petugas'];
 
     // Hapus akun terkait terlebih dahulu
-    $query_hapus_akun = "DELETE FROM akun WHERE id_petugas = '$id_petugas'";
-    mysqli_query($koneksi, $query_hapus_akun);
+    $stmt = mysqli_prepare($koneksi, "DELETE FROM akun WHERE id_petugas = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     // Hapus transaksi terkait terlebih dahulu
-    $query_hapus_detail_transaksi = "DELETE dt FROM detail_transaksi dt
-                                     INNER JOIN transaksi t ON dt.id_transaksi = t.id_transaksi
-                                     WHERE t.id_petugas = '$id_petugas'";
-    mysqli_query($koneksi, $query_hapus_detail_transaksi);
+    $stmt = mysqli_prepare($koneksi, "DELETE dt FROM detail_transaksi dt INNER JOIN transaksi t ON dt.id_transaksi = t.id_transaksi WHERE t.id_petugas = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
-    $query_hapus_transaksi = "DELETE FROM transaksi WHERE id_petugas = '$id_petugas'";
-    mysqli_query($koneksi, $query_hapus_transaksi);
+    $stmt = mysqli_prepare($koneksi, "DELETE FROM transaksi WHERE id_petugas = ?");
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     // Pastikan petugas ada sebelum menghapus
-    $query_check = "SELECT * FROM petugas WHERE id_petugas = '$id_petugas'";
-    $result_check = mysqli_query($koneksi, $query_check);
-    if (mysqli_num_rows($result_check) > 0) {
-        $query_hapus = "DELETE FROM petugas WHERE id_petugas = '$id_petugas'";
-        mysqli_query($koneksi, $query_hapus);
+    $stmt = mysqli_prepare($koneksi, "SELECT * FROM petugas WHERE id_petugas = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+    mysqli_stmt_execute($stmt);
+    $result_check = mysqli_stmt_get_result($stmt);
+    $petugas_ditemukan = mysqli_num_rows($result_check) > 0;
+    mysqli_stmt_close($stmt);
+    if ($petugas_ditemukan) {
+        $stmt = mysqli_prepare($koneksi, "DELETE FROM petugas WHERE id_petugas = ?");
+        mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         $_SESSION['message'] = "Petugas berhasil dihapus!";
     } else {
         $_SESSION['error'] = "Petugas tidak ditemukan.";
@@ -154,8 +172,12 @@ include "../include/navbar_admin.php";
         <?php 
             // Ambil data petugas dari database
             $search = isset($_GET['search']) ? $_GET['search'] : '';
-            $sql = "SELECT * FROM petugas WHERE nama_petugas LIKE '%$search%' OR no_telp LIKE '%$search%' OR alamat LIKE '%$search%' OR email LIKE '%$search%'";
-            $sql_eksekusi = mysqli_query($koneksi, $sql);
+            $like = "%" . $search . "%";
+            $stmt = mysqli_prepare($koneksi, "SELECT * FROM petugas WHERE nama_petugas LIKE ? OR no_telp LIKE ? OR alamat LIKE ? OR email LIKE ?");
+            mysqli_stmt_bind_param($stmt, "ssss", $like, $like, $like, $like);
+            mysqli_stmt_execute($stmt);
+            $sql_eksekusi = mysqli_stmt_get_result($stmt);
+            mysqli_stmt_close($stmt);
         ?>
 
         <!-- Tabel Data Petugas -->

@@ -10,16 +10,20 @@ if (!isset($_GET['id_transaksi'])) {
     exit();
 }
 
-$id_transaksi = $_GET['id_transaksi'];
+$id_transaksi = (int) $_GET['id_transaksi'];
 
 // Ambil data transaksi + customer + petugas
 $query = "SELECT t.*, c.nama_customer, p.nama_petugas
           FROM transaksi t
           INNER JOIN customer c ON t.id_customer = c.id_customer
           INNER JOIN petugas p ON t.id_petugas = p.id_petugas
-          WHERE t.id_transaksi = '$id_transaksi'";
-$result = mysqli_query($koneksi, $query);
+          WHERE t.id_transaksi = ?";
+$stmt = mysqli_prepare($koneksi, $query);
+mysqli_stmt_bind_param($stmt, "i", $id_transaksi);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 $data = mysqli_fetch_assoc($result);
+mysqli_stmt_close($stmt);
 
 // Ambil data jenis_cucian untuk form
 $jenis_cucian_query = "SELECT * FROM jenis_cucian";
@@ -28,11 +32,14 @@ $jenis_cucian_result = mysqli_query($koneksi, $jenis_cucian_query);
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Jika klik "Simpan Transaksi"
     if (isset($_POST['simpan_transaksi'])) {
-        $status_transaksi = $_POST['status_transaksi'];
+        $status_transaksi = (int) $_POST['status_transaksi'];
 
         // Update status transaksi => "Proses" dan status pembayaran
-        $update_status_query = "UPDATE transaksi SET status = 'Proses', status_transaksi = '$status_transaksi' WHERE id_transaksi = '$id_transaksi'";
-        mysqli_query($koneksi, $update_status_query);
+        $update_status_query = "UPDATE transaksi SET status = 'Proses', status_transaksi = ? WHERE id_transaksi = ?";
+        $stmt = mysqli_prepare($koneksi, $update_status_query);
+        mysqli_stmt_bind_param($stmt, "ii", $status_transaksi, $id_transaksi);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
 
         // Kembali ke show_transaksi
         header("Location: show_transaksi.php");
@@ -40,31 +47,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     // Jika klik "hapus_detail"
     if (isset($_POST['hapus_detail'])) {
-        $id_detail_transaksi = $_POST['id_detail_transaksi'];
-        $delete_query = "DELETE FROM detail_transaksi WHERE id_detail_transaksi = '$id_detail_transaksi'";
-        mysqli_query($koneksi, $delete_query);
+        $id_detail_transaksi = (int) $_POST['id_detail_transaksi'];
+        $delete_query = "DELETE FROM detail_transaksi WHERE id_detail_transaksi = ?";
+        $stmt = mysqli_prepare($koneksi, $delete_query);
+        mysqli_stmt_bind_param($stmt, "i", $id_detail_transaksi);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         header("Location: show_detail_transaksi.php?id_transaksi=$id_transaksi");
         exit();
     }
     // Jika menambah detail cucian
     else {
-        $id_jenis_cucian = $_POST['id_jenis_cucian'];
-        $berat = $_POST['berat'];
+        $id_jenis_cucian = (int) $_POST['id_jenis_cucian'];
+        $berat = (float) $_POST['berat'];
 
         // Ambil harga dari jenis_cucian
-        $harga_query = "SELECT harga FROM jenis_cucian WHERE id_jenis_cucian = '$id_jenis_cucian'";
-        $harga_result = mysqli_query($koneksi, $harga_query);
+        $harga_query = "SELECT harga FROM jenis_cucian WHERE id_jenis_cucian = ?";
+        $stmt = mysqli_prepare($koneksi, $harga_query);
+        mysqli_stmt_bind_param($stmt, "i", $id_jenis_cucian);
+        mysqli_stmt_execute($stmt);
+        $harga_result = mysqli_stmt_get_result($stmt);
 
         if ($harga_result) {
             $harga_data = mysqli_fetch_assoc($harga_result);
             $harga = $harga_data['harga'];
+            mysqli_stmt_close($stmt);
             $total_harga = $berat * $harga;
 
             // Cek apakah sudah ada baris detail utk jenis_cucian ini
             $check_query = "SELECT * FROM detail_transaksi
-                            WHERE id_transaksi = '$id_transaksi' 
-                              AND id_jenis_cucian = '$id_jenis_cucian'";
-            $check_result = mysqli_query($koneksi, $check_query);
+                            WHERE id_transaksi = ?
+                              AND id_jenis_cucian = ?";
+            $stmt = mysqli_prepare($koneksi, $check_query);
+            mysqli_stmt_bind_param($stmt, "ii", $id_transaksi, $id_jenis_cucian);
+            mysqli_stmt_execute($stmt);
+            $check_result = mysqli_stmt_get_result($stmt);
 
             if (mysqli_num_rows($check_result) > 0) {
                 // Update entry lama
@@ -73,17 +90,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $new_total_harga = $new_berat * $harga;
 
                 $update_query = "UPDATE detail_transaksi
-                                 SET berat = '$new_berat', total_harga = '$new_total_harga'
-                                 WHERE id_transaksi = '$id_transaksi'
-                                   AND id_jenis_cucian = '$id_jenis_cucian'";
-                mysqli_query($koneksi, $update_query);
+                                 SET berat = ?, total_harga = ?
+                                 WHERE id_transaksi = ?
+                                   AND id_jenis_cucian = ?";
+                $update_stmt = mysqli_prepare($koneksi, $update_query);
+                mysqli_stmt_bind_param($update_stmt, "ddii", $new_berat, $new_total_harga, $id_transaksi, $id_jenis_cucian);
+                mysqli_stmt_execute($update_stmt);
+                mysqli_stmt_close($update_stmt);
             } else {
                 // Tambah entry baru
                 $insert_query = "INSERT INTO detail_transaksi 
                                  (id_transaksi, id_jenis_cucian, berat, total_harga)
-                                 VALUES ('$id_transaksi', '$id_jenis_cucian', '$berat', '$total_harga')";
-                mysqli_query($koneksi, $insert_query);
+                                 VALUES (?, ?, ?, ?)";
+                $insert_stmt = mysqli_prepare($koneksi, $insert_query);
+                mysqli_stmt_bind_param($insert_stmt, "iidd", $id_transaksi, $id_jenis_cucian, $berat, $total_harga);
+                mysqli_stmt_execute($insert_stmt);
+                mysqli_stmt_close($insert_stmt);
             }
+            mysqli_stmt_close($stmt);
+        } else {
+            mysqli_stmt_close($stmt);
         }
         // Setelah menambah detail, redirect ke halaman ini lagi
         header("Location: show_detail_transaksi.php?id_transaksi=$id_transaksi");
@@ -243,9 +269,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                              FROM detail_transaksi dt
                              INNER JOIN jenis_cucian jc 
                              ON dt.id_jenis_cucian = jc.id_jenis_cucian 
-                             WHERE dt.id_transaksi = '$id_transaksi'";
-            $detail_result = mysqli_query($koneksi, $detail_query);
+                             WHERE dt.id_transaksi = ?";
+            $detail_stmt = mysqli_prepare($koneksi, $detail_query);
+            mysqli_stmt_bind_param($detail_stmt, "i", $id_transaksi);
+            mysqli_stmt_execute($detail_stmt);
+            $detail_result = mysqli_stmt_get_result($detail_stmt);
             $detail_count = mysqli_num_rows($detail_result);
+            mysqli_stmt_close($detail_stmt);
 
             while ($detail = mysqli_fetch_assoc($detail_result)):
               $total_harga = $detail['berat'] * $detail['harga'];

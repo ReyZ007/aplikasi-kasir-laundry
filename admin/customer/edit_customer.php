@@ -9,9 +9,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $no_telp       = $_POST['no_telp'];
 
     $sql = "UPDATE customer 
-            SET nama_customer = '$nama_customer', no_telp = '$no_telp'
-            WHERE id_customer = '$id_customer'";
-    mysqli_query($koneksi, $sql);
+            SET nama_customer = ?, no_telp = ?
+            WHERE id_customer = ?";
+    $stmt = mysqli_prepare($koneksi, $sql);
+    mysqli_stmt_bind_param($stmt, "ssi", $nama_customer, $no_telp, $id_customer);
+    mysqli_stmt_execute($stmt);
 
     // Redirect kembali ke show_customer.php dengan notifikasi
     header("Location: show_customer.php?edited=1");

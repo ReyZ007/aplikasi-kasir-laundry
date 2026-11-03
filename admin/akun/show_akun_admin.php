@@ -11,16 +11,20 @@ if ($_SESSION['level'] != "admin") {
 
 // Proses Tambah Akun
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
-    $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+    $username = $_POST['username'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $level = mysqli_real_escape_string($koneksi, $_POST['level']);
-    $id_petugas = mysqli_real_escape_string($koneksi, $_POST['id_petugas']);
+    $level = $_POST['level'];
+    $id_petugas = (int) $_POST['id_petugas'];
 
-    $sql = "INSERT INTO akun (username, password, level, id_petugas) VALUES ('$username', '$password', '$level', '$id_petugas')";
-    if (mysqli_query($koneksi, $sql)) {
+    $sql = "INSERT INTO akun (username, password, level, id_petugas) VALUES (?, ?, ?, ?)";
+    $stmt = mysqli_prepare($koneksi, $sql);
+    if ($stmt && mysqli_stmt_bind_param($stmt, "sssi", $username, $password, $level, $id_petugas) && mysqli_stmt_execute($stmt)) {
         $_SESSION['message'] = "Akun berhasil ditambahkan!";
     } else {
         $_SESSION['error'] = "Gagal menambahkan akun: " . mysqli_error($koneksi);
+    }
+    if ($stmt) {
+        mysqli_stmt_close($stmt);
     }
 
     header("Location: show_akun_admin.php");
@@ -29,17 +33,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
 
 // Proses Edit Akun
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
-    $id_akun = $_POST['id_akun'];
-    $username = mysqli_real_escape_string($koneksi, $_POST['username']);
+    $id_akun = (int) $_POST['id_akun'];
+    $username = $_POST['username'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $level = mysqli_real_escape_string($koneksi, $_POST['level']);
-    $id_petugas = mysqli_real_escape_string($koneksi, $_POST['id_petugas']);
+    $level = $_POST['level'];
+    $id_petugas = (int) $_POST['id_petugas'];
 
-    $sql = "UPDATE akun SET username = '$username', password = '$password', level = '$level', id_petugas = '$id_petugas' WHERE id_akun = '$id_akun'";
-    if (mysqli_query($koneksi, $sql)) {
+    $sql = "UPDATE akun SET username = ?, password = ?, level = ?, id_petugas = ? WHERE id_akun = ?";
+    $stmt = mysqli_prepare($koneksi, $sql);
+    if ($stmt && mysqli_stmt_bind_param($stmt, "sssii", $username, $password, $level, $id_petugas, $id_akun) && mysqli_stmt_execute($stmt)) {
         $_SESSION['message'] = "Akun berhasil diperbarui!";
     } else {
         $_SESSION['error'] = "Gagal memperbarui akun: " . mysqli_error($koneksi);
+    }
+    if ($stmt) {
+        mysqli_stmt_close($stmt);
     }
 
     header("Location: show_akun_admin.php");
@@ -48,14 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
 
 // Proses Hapus Akun
 if (isset($_GET['hapus_akun'])) {
-    $id_akun = $_GET['hapus_akun'];
+    $id_akun = (int) $_GET['hapus_akun'];
 
     // Pastikan ID akun valid
-    $query_check = "SELECT * FROM akun WHERE id_akun = '$id_akun'";
-    $result_check = mysqli_query($koneksi, $query_check);
+    $query_check = "SELECT * FROM akun WHERE id_akun = ?";
+    $stmt = mysqli_prepare($koneksi, $query_check);
+    mysqli_stmt_bind_param($stmt, "i", $id_akun);
+    mysqli_stmt_execute($stmt);
+    $result_check = mysqli_stmt_get_result($stmt);
+    mysqli_stmt_close($stmt);
     if (mysqli_num_rows($result_check) > 0) {
-        $query_hapus = "DELETE FROM akun WHERE id_akun = '$id_akun'";
-        mysqli_query($koneksi, $query_hapus);
+        $query_hapus = "DELETE FROM akun WHERE id_akun = ?";
+        $stmt = mysqli_prepare($koneksi, $query_hapus);
+        mysqli_stmt_bind_param($stmt, "i", $id_akun);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         $_SESSION['message'] = "Akun berhasil dihapus!";
     } else {
         $_SESSION['error'] = "Akun tidak ditemukan.";

@@ -11,13 +11,14 @@ if ($_SESSION['level'] != "petugas") {
 
 // ====== PROSES TAMBAH CUSTOMER (POST) ======
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['tambah_customer'])) {
-    // Gunakan mysqli_real_escape_string untuk mencegah SQL Injection
-    $nama_customer = mysqli_real_escape_string($koneksi, $_POST['nama_customer']);
-    $no_telp       = mysqli_real_escape_string($koneksi, $_POST['no_telp']);
+    $nama_customer = $_POST['nama_customer'];
+    $no_telp       = $_POST['no_telp'];
     
     $insert_sql = "INSERT INTO customer (nama_customer, no_telp)
-                   VALUES ('$nama_customer', '$no_telp')";
-    if (mysqli_query($koneksi, $insert_sql)) {
+                   VALUES (?, ?)";
+    $stmt = mysqli_prepare($koneksi, $insert_sql);
+    mysqli_stmt_bind_param($stmt, "ss", $nama_customer, $no_telp);
+    if (mysqli_stmt_execute($stmt)) {
         // Setelah insert, redirect dengan parameter GET agar tidak terjadi form resubmission
         header("Location: show_customer.php?added=1");
         exit();

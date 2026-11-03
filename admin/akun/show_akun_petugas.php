@@ -8,9 +8,13 @@ if (!isset($_SESSION['id_petugas']) || $_SESSION['level'] != "petugas") {
     exit();
 }
 
-$id_petugas = $_SESSION['id_petugas'];
-$query = "SELECT * FROM akun WHERE id_petugas = '$id_petugas'";
-$result = mysqli_query($koneksi, $query);
+$id_petugas = (int) $_SESSION['id_petugas'];
+$query = "SELECT * FROM akun WHERE id_petugas = ?";
+$stmt = mysqli_prepare($koneksi, $query);
+mysqli_stmt_bind_param($stmt, "i", $id_petugas);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+mysqli_stmt_close($stmt);
 
 if (!$result) {
     die("Query Error: " . mysqli_error($koneksi));
@@ -22,7 +26,7 @@ $update_success = false;
 $error_message = "";
 
 if (isset($_POST['update'])) {
-    $new_username = mysqli_real_escape_string($koneksi, $_POST['username']);
+    $new_username = $_POST['username'];
     $new_password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
 
@@ -32,21 +36,28 @@ if (isset($_POST['update'])) {
         $error_message = "Password dan Konfirmasi Password tidak cocok!";
     } else {
         // Check if the new username already exists
-        $check_query = "SELECT * FROM akun WHERE username = '$new_username' AND id_petugas != '$id_petugas'";
-        $check_result = mysqli_query($koneksi, $check_query);
+        $check_query = "SELECT * FROM akun WHERE username = ? AND id_petugas != ?";
+        $check_stmt = mysqli_prepare($koneksi, $check_query);
+        mysqli_stmt_bind_param($check_stmt, "si", $new_username, $id_petugas);
+        mysqli_stmt_execute($check_stmt);
+        $check_result = mysqli_stmt_get_result($check_stmt);
+        mysqli_stmt_close($check_stmt);
 
         if (mysqli_num_rows($check_result) > 0) {
             $error_message = "Username sudah digunakan oleh akun lain!";
         } else {
             $hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
-            $update_query = "UPDATE akun SET username = '$new_username', password = '$hashed_password' WHERE id_petugas = '$id_petugas'";
+            $update_query = "UPDATE akun SET username = ?, password = ? WHERE id_petugas = ?";
+            $update_stmt = mysqli_prepare($koneksi, $update_query);
+            mysqli_stmt_bind_param($update_stmt, "ssi", $new_username, $hashed_password, $id_petugas);
 
-            if (mysqli_query($koneksi, $update_query)) {
+            if (mysqli_stmt_execute($update_stmt)) {
                 $update_success = true;
                 session_destroy(); // Logout paksa setelah perubahan data
             } else {
                 $update_success = false;
             }
+            mysqli_stmt_close($update_stmt);
         }
     }
 }

@@ -10,14 +10,17 @@ if ($_SESSION['level'] != "admin") {
 
 // Proses Tambah
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
-    $nama_jenis_cucian = mysqli_real_escape_string($koneksi, $_POST['nama_jenis_cucian']);
-    $harga = mysqli_real_escape_string($koneksi, $_POST['harga']);
+    $nama_jenis_cucian = $_POST['nama_jenis_cucian'];
+    $harga = (int) $_POST['harga'];
 
-    $sql = "INSERT INTO jenis_cucian (nama_jenis_cucian, harga) VALUES ('$nama_jenis_cucian', '$harga')";
-    if (mysqli_query($koneksi, $sql)) {
+    $stmt = mysqli_prepare($koneksi, "INSERT INTO jenis_cucian (nama_jenis_cucian, harga) VALUES (?, ?)");
+    if ($stmt && mysqli_stmt_bind_param($stmt, "si", $nama_jenis_cucian, $harga) && mysqli_stmt_execute($stmt)) {
         $_SESSION['message'] = "Jenis cucian berhasil ditambahkan!";
     } else {
         $_SESSION['error'] = "Gagal menambahkan jenis cucian: " . mysqli_error($koneksi);
+    }
+    if ($stmt) {
+        mysqli_stmt_close($stmt);
     }
 
     header("Location: show_jenis_cucian.php");
@@ -26,18 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
 
 // Proses Edit
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
-    $id_jenis_cucian = $_POST['id_jenis_cucian'];
-    $nama_jenis_cucian = mysqli_real_escape_string($koneksi, $_POST['nama_jenis_cucian']);
-    $harga = mysqli_real_escape_string($koneksi, $_POST['harga']);
+    $id_jenis_cucian = (int) $_POST['id_jenis_cucian'];
+    $nama_jenis_cucian = $_POST['nama_jenis_cucian'];
+    $harga = (int) $_POST['harga'];
 
-    $sql = "UPDATE jenis_cucian 
-            SET nama_jenis_cucian = '$nama_jenis_cucian', 
-                harga = '$harga' 
-            WHERE id_jenis_cucian = '$id_jenis_cucian'";
-    if (mysqli_query($koneksi, $sql)) {
+    $stmt = mysqli_prepare($koneksi, "UPDATE jenis_cucian SET nama_jenis_cucian = ?, harga = ? WHERE id_jenis_cucian = ?");
+    if ($stmt && mysqli_stmt_bind_param($stmt, "sii", $nama_jenis_cucian, $harga, $id_jenis_cucian) && mysqli_stmt_execute($stmt)) {
         $_SESSION['message'] = "Jenis cucian berhasil diperbarui!";
     } else {
         $_SESSION['error'] = "Gagal memperbarui jenis cucian: " . mysqli_error($koneksi);
+    }
+    if ($stmt) {
+        mysqli_stmt_close($stmt);
     }
 
     header("Location: show_jenis_cucian.php");
@@ -46,15 +49,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
 
 // Proses Hapus
 if (isset($_GET['hapus_jenis_cucian'])) {
-    $id_jenis_cucian = $_GET['hapus_jenis_cucian'];
+    $id_jenis_cucian = (int) $_GET['hapus_jenis_cucian'];
 
     // Pastikan ID jenis cucian valid
-    $query_check = "SELECT * FROM jenis_cucian WHERE id_jenis_cucian = '$id_jenis_cucian'";
-    $result_check = mysqli_query($koneksi, $query_check);
-    if (mysqli_num_rows($result_check) > 0) {
+    $stmt = mysqli_prepare($koneksi, "SELECT * FROM jenis_cucian WHERE id_jenis_cucian = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id_jenis_cucian);
+    mysqli_stmt_execute($stmt);
+    $result_check = mysqli_stmt_get_result($stmt);
+    $jenis_cucian_ditemukan = mysqli_num_rows($result_check) > 0;
+    mysqli_stmt_close($stmt);
+    if ($jenis_cucian_ditemukan) {
         // Hapus jenis cucian
-        $query_hapus = "DELETE FROM jenis_cucian WHERE id_jenis_cucian = '$id_jenis_cucian'";
-        mysqli_query($koneksi, $query_hapus);
+        $stmt = mysqli_prepare($koneksi, "DELETE FROM jenis_cucian WHERE id_jenis_cucian = ?");
+        mysqli_stmt_bind_param($stmt, "i", $id_jenis_cucian);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         $_SESSION['message'] = "Jenis cucian berhasil dihapus!";
     } else {
         $_SESSION['error'] = "Jenis cucian tidak ditemukan.";
