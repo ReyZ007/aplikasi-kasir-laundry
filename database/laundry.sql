@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Waktu pembuatan: 02 Nov 2026 pada 20.15
+-- Waktu pembuatan: 03 Nov 2026 pada 07.03
 -- Versi server: 10.4.32-MariaDB
 -- Versi PHP: 8.2.12
 
@@ -41,7 +41,7 @@ CREATE TABLE `akun` (
 
 INSERT INTO `akun` (`id_akun`, `username`, `password`, `level`, `id_petugas`) VALUES
 (1, 'admin', 'c4ca4238a0b923820dcc509a6f75849b', 'admin', 1),
-(25, 'Budi', 'c4ca4238a0b923820dcc509a6f75849b', 'petugas', 24);
+(25, 'Budi', 'c20ad4d76fe97759aa27a0c99bff6710', 'petugas', 24);
 
 -- --------------------------------------------------------
 
@@ -60,7 +60,12 @@ CREATE TABLE `customer` (
 --
 
 INSERT INTO `customer` (`id_customer`, `nama_customer`, `no_telp`) VALUES
-(35, 'Asep Kurniawan', '0812-0000-0001');
+(35, 'Asep Kurniawan', '0812-0000-0001'),
+(36, 'Siti Rahmawati', '0813-2000-0002'),
+(37, 'Andi Pratama', '0812-3000-0003'),
+(38, 'Dewi Lestari', '0857-4000-0004'),
+(39, 'Rina Wulandari', '0821-5000-0005'),
+(40, 'Joko Santoso', '0878-6000-0006');
 
 -- --------------------------------------------------------
 
@@ -75,6 +80,42 @@ CREATE TABLE `detail_transaksi` (
   `id_transaksi` int(11) NOT NULL,
   `id_jenis_cucian` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `detail_transaksi`
+--
+
+INSERT INTO `detail_transaksi` (`id_detail_transaksi`, `berat`, `total_harga`, `id_transaksi`, `id_jenis_cucian`) VALUES
+(193, 3, 21000, 301, 1),
+(194, 2, 10000, 301, 2),
+(195, 4, 28000, 302, 1),
+(196, 2, 14000, 303, 1),
+(197, 1, 15000, 303, 3),
+(198, 5, 35000, 304, 1),
+(199, 3, 15000, 304, 2),
+(200, 6, 42000, 305, 1),
+(201, 2, 30000, 305, 3),
+(202, 3, 21000, 306, 1),
+(203, 1, 5000, 306, 2),
+(204, 4, 28000, 307, 1),
+(205, 2, 10000, 307, 2),
+(206, 1, 15000, 307, 3),
+(207, 8, 56000, 308, 1),
+(208, 2, 30000, 309, 3),
+(209, 3, 15000, 309, 2),
+(210, 5, 35000, 310, 1),
+(211, 2, 10000, 310, 2),
+(212, 4, 28000, 311, 1),
+(213, 1, 15000, 311, 3),
+(214, 6, 42000, 312, 1),
+(215, 4, 20000, 312, 2),
+(216, 3, 21000, 313, 1),
+(217, 2, 30000, 313, 3),
+(218, 5, 35000, 314, 1),
+(219, 2, 14000, 315, 1),
+(220, 2, 10000, 315, 2),
+(221, 7, 49000, 316, 1),
+(222, 1, 15000, 316, 3);
 
 -- --------------------------------------------------------
 
@@ -116,8 +157,8 @@ CREATE TABLE `petugas` (
 --
 
 INSERT INTO `petugas` (`id_petugas`, `nama_petugas`, `no_telp`, `alamat`, `email`) VALUES
-(1, 'admin', '081200000001', 'Jawa Barat', 'admin@gmail.com'),
-(24, 'Budi Santoso', '081200000002', 'Jawa Barat', 'budisantoso@gmail.com');
+(1, 'admin', '0812-0000-0001', 'Jawa Barat', 'admin@gmail.com'),
+(24, 'Budi Santoso', '0812-0000-0002', 'Jawa Barat', 'budisantoso@gmail.com');
 
 -- --------------------------------------------------------
 
@@ -134,6 +175,28 @@ CREATE TABLE `transaksi` (
   `id_customer` int(11) NOT NULL,
   `id_petugas` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data untuk tabel `transaksi`
+--
+
+INSERT INTO `transaksi` (`id_transaksi`, `tgl_transaksi`, `waktu_transaksi`, `status`, `status_transaksi`, `id_customer`, `id_petugas`) VALUES
+(301, '2026-10-28', '09:15:00', 'Selesai', 1, 35, 24),
+(302, '2026-10-28', '14:30:00', 'Selesai', 1, 36, 24),
+(303, '2026-10-29', '10:05:00', 'Selesai', 1, 37, 24),
+(304, '2026-10-29', '16:40:00', 'Selesai', 1, 38, 24),
+(305, '2026-10-30', '08:50:00', 'Selesai', 1, 39, 24),
+(306, '2026-10-31', '11:20:00', 'Selesai', 1, 40, 24),
+(307, '2026-10-31', '15:10:00', 'Selesai', 1, 35, 24),
+(308, '2026-11-01', '09:30:00', 'Selesai', 1, 36, 24),
+(309, '2026-11-01', '13:45:00', 'Selesai', 1, 37, 24),
+(310, '2026-11-02', '10:15:00', 'Selesai', 1, 38, 24),
+(311, '2026-11-02', '17:00:00', 'Disetrika', 0, 39, 24),
+(312, '2026-11-03', '08:40:00', 'Selesai', 1, 40, 24),
+(313, '2026-11-03', '10:25:00', 'Disetrika', 0, 35, 24),
+(314, '2026-11-03', '12:10:00', 'Dicuci', 0, 36, 24),
+(315, '2026-11-03', '14:05:00', 'Proses', 0, 37, 24),
+(316, '2026-11-03', '15:30:00', 'Proses', 0, 38, 24);
 
 --
 -- Indexes for dumped tables
@@ -196,13 +259,13 @@ ALTER TABLE `akun`
 -- AUTO_INCREMENT untuk tabel `customer`
 --
 ALTER TABLE `customer`
-  MODIFY `id_customer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
+  MODIFY `id_customer` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
 
 --
 -- AUTO_INCREMENT untuk tabel `detail_transaksi`
 --
 ALTER TABLE `detail_transaksi`
-  MODIFY `id_detail_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
+  MODIFY `id_detail_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=223;
 
 --
 -- AUTO_INCREMENT untuk tabel `jenis_cucian`
@@ -220,7 +283,7 @@ ALTER TABLE `petugas`
 -- AUTO_INCREMENT untuk tabel `transaksi`
 --
 ALTER TABLE `transaksi`
-  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=271;
+  MODIFY `id_transaksi` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=317;
 
 --
 -- Ketidakleluasaan untuk tabel pelimpahan (Dumped Tables)

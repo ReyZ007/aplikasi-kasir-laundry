@@ -113,33 +113,3 @@
 <?php
     include "include/footer.php";
 ?>
-
-<!-- Add the following code to display the table with filtered data -->
-<?php
-    // Database connection
-    include "include/db_connection.php";
-
-    // Fetch data with status 'proses' from 'jatuh tempo' table
-    $query = "SELECT * FROM jatuh_tempo WHERE status = 'proses'";
-    $result = mysqli_query($conn, $query);
-
-    if (mysqli_num_rows($result) > 0) {
-        echo "<table class='table'>";
-        echo "<thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>";
-        echo "<tbody>";
-        while ($row = mysqli_fetch_assoc($result)) {
-            echo "<tr>";
-            echo "<td>" . $row['id'] . "</td>";
-            echo "<td>" . $row['name'] . "</td>";
-            echo "<td>" . $row['status'] . "</td>";
-            echo "</tr>";
-        }
-        echo "</tbody>";
-        echo "</table>";
-    } else {
-        echo "No records found.";
-    }
-
-    // Close the database connection
-    mysqli_close($conn);
-?>
